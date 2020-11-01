@@ -1,0 +1,7 @@
+{
+  "name": "chart-d3",
+  "version": "1.0.0",
+  "dependencies": {
+    "d3": "^6.2.0"
+  }
+}
