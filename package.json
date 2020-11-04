@@ -2,6 +2,7 @@
   "name": "chart-d3",
   "version": "1.0.0",
   "dependencies": {
+    "@observablehq/stdlib": "^3.4.0",
     "d3": "^6.2.0"
   },
   "scripts": {
