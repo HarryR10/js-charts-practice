@@ -1,31 +1,33 @@
 import * as d3 from "d3";
 import uid from "@observablehq/stdlib/src/dom/uid"
-
-// let d3 = require("d3")
 // import DOM from "@observablehq/stdlib/src/dom"
+
+// let d3 = require("d3");
+// let uid = require("@observablehq/stdlib/src/dom/uid");
+
 
 
 const data = [
-    {date: new Date(1988,1,1), value: 12681},
-    {date: new Date(1988,1,2), value: 13264},
-    {date: new Date(1988,1,3), value: 13953},
-    {date: new Date(1988,1,4), value: 13921},
-    {date: new Date(1988,1,5), value: 13932},
-    {date: new Date(1988,1,6), value: 13157},
-    {date: new Date(1988,1,7), value: 11159},
-    {date: new Date(1988,1,8), value: 11631},
-    {date: new Date(1988,1,9), value: 12045},
-    {date: new Date(1988,1,10), value: 13160},
-    {date: new Date(1988,1,11), value: 14240},
-    {date: new Date(1988,1,12), value: 14302},
-    {date: new Date(1988,1,13), value: 14353},
-    {date: new Date(1988,1,14), value: 14451},
-    {date: new Date(1988,1,15), value: 14496},
-    {date: new Date(1988,1,16), value: 13041},
-    {date: new Date(1988,1,17), value: 13337},
-    {date: new Date(1988,1,18), value: 12396},
-    {date: new Date(1988,1,19), value: 13721},
-    {date: new Date(1988,1,20), value: 13745}];
+    {date: new Date(1988,1,1), value: 12681, downBorder: 12100},
+    {date: new Date(1988,1,2), value: 13264, downBorder: 12200},
+    {date: new Date(1988,1,3), value: 13953, downBorder: 1200},
+    {date: new Date(1988,1,4), value: 13921, downBorder: 1200},
+    {date: new Date(1988,1,5), value: 13932, downBorder: 1200},
+    {date: new Date(1988,1,6), value: 13157, downBorder: 1200},
+    {date: new Date(1988,1,7), value: 11159, downBorder: 1200},
+    {date: new Date(1988,1,8), value: 11631, downBorder: 1200},
+    {date: new Date(1988,1,9), value: 12045, downBorder: 1200},
+    {date: new Date(1988,1,10), value: 13160, downBorder: 1200},
+    {date: new Date(1988,1,11), value: 14240, downBorder: 1200},
+    {date: new Date(1988,1,12), value: 14302, downBorder: 1200},
+    {date: new Date(1988,1,13), value: 14353, downBorder: 1200},
+    {date: new Date(1988,1,14), value: 14451, downBorder: 1200},
+    {date: new Date(1988,1,15), value: 14496, downBorder: 1200},
+    {date: new Date(1988,1,16), value: 13041, downBorder: 1200},
+    {date: new Date(1988,1,17), value: 13337, downBorder: 1200},
+    {date: new Date(1988,1,18), value: 12396, downBorder: 1200},
+    {date: new Date(1988,1,19), value: 13721, downBorder: 1200},
+    {date: new Date(1988,1,20), value: 13745, downBorder: 1200}];
 
 const source = {
     apiPath: "https://www.alphavantage.co/",
@@ -71,10 +73,17 @@ const yAxis = (g, y) => g
         .attr("font-weight", "bold")
         .text(data.y))
 
-const area = (data, x) => d3.area()
+const area = (data, x) =>
+    // d3.stack()
+    //     .keys(["value"])
+    //     .order(d3.stackOrderNone)
+    //     .offset(d3.stackOffsetNone)
+    //     // .map
+    // (data)
+    d3.area()
     .curve(d3.curveStepAfter)
     .x(d => x(d.date))
-    .y0(y(0))
+    .y0(d => y(d.downBorder))
     .y1(d => y(d.value))
     (data)
 
@@ -102,14 +111,22 @@ const chart = function () {
         //здесь кадрируем область с данными:
         .translateExtent([[margin.left, -Infinity], [width - margin.right, Infinity]])
         //listen for zoom events - первый параметр - это тип события. Второй - функция
+        //на событие увеличения повешена функция zoomed()
         .on("zoom", zoomed);
 
+    //получает текущее событие т.е событие зума
+    function zoomed(event){
+        const xz = event.transform.rescaleX(x); //"the current zoom transform"
+        path.attr("d", area(data, xz));
+        gx.call(xAxis, xz);
+    }
 
-    // const svg = d3.create("svg")
-    //     .attr("viewBox", [0, 0, width, height]);
 
-    const svg = d3.select("svg")
+    const svg = d3.select("body").append("svg")
         .attr("viewBox", [0, 0, width, height]);
+
+    // const svg = d3.select("svg")
+    //     .attr("viewBox", [0, 0, width, height]);
 
 
     //разбирается пример с Observable, где используется объект DOM - часть библиотеки @observablehq/stdlib
@@ -120,35 +137,42 @@ const chart = function () {
     const clip = uid("clip");
     // console.log(clip);
 
+
+    //clipPath - это та область, где происходит отрисовка "фон"
+    //<clipPath> - позволяет "отсекать" части svg
+    //за границы, определенные здесь, svg не выйдет
+    // https://developer.mozilla.org/ru/docs/Web/SVG/Element/clipPath
     svg.append("clipPath")                                  //добавляет в svg дочерний элемент, мб в виде функции
         .attr("id", clip.id)
       .append("rect")
         .attr("x", margin.left)
         .attr("y", margin.top)
         .attr("width", width - margin.left - margin.right)
-        .attr("height", height - margin.top - margin.bottom);
+        .attr("height", height - margin.top - margin.bottom)
+        .attr("rx", 15)
+        .attr("ry", 15)
 
+    //отрисовка самого графика происходит в "path"
+    //Элемент <path> является общим элементом для описания фигуры.
+    //Все базовые фигуры могут быть созданы с помощью элемента path.
     const path = svg.append("path")
         .attr("clip-path", clip)
         .attr("fill", "orange")
         .attr("d", area(data, x));
 
+    //Элемент <g> используется для группировки других SVG элементов
+    //добавляем оси - обращаемся к соответствующим функциям
     const gx = svg.append("g")
         .call(xAxis, x);
 
     svg.append("g")
         .call(yAxis, y);
 
+    //
     svg.call(zoom)
         .transition()
         .duration(750)
         .call(zoom.scaleTo, 4, [x(Date.UTC(1988, 1, 4)), 0]);
-
-    function zoomed(event){
-        const xz = event.transform.rescaleX(x);
-        path.attr("d", area(data, xz));
-        gx.call(xAxis, xz);
-    }
 
     return svg.node();
 }
