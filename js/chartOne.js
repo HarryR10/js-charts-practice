@@ -6,7 +6,6 @@ import uid from "@observablehq/stdlib/src/dom/uid"
 // let uid = require("@observablehq/stdlib/src/dom/uid");
 
 
-
 const data = [
     {date: new Date(1988,1,1), value: 12681, downBorder: 12100},
     {date: new Date(1988,1,2), value: 13264, downBorder: 12200},
@@ -73,19 +72,28 @@ const yAxis = (g, y) => g
         .attr("font-weight", "bold")
         .text(data.y))
 
-const area = (data, x) =>
-    // d3.stack()
-    //     .keys(["value"])
-    //     .order(d3.stackOrderNone)
-    //     .offset(d3.stackOffsetNone)
-    //     // .map
-    // (data)
+const area =  (data, x, svg) =>
     d3.area()
-    .curve(d3.curveStepAfter)
-    .x(d => x(d.date))
-    .y0(d => y(d.downBorder))
-    .y1(d => y(d.value))
-    (data)
+        .curve(d3.curveStepAfter)
+        .x(d => x(d.date))
+        .y0(d => y(d.downBorder))
+        .y1(d => y(d.value))
+        (data)
+    // svg.selectAll(".stock-shadow")
+    //     .remove("g")
+
+    // svg.append("g")
+    //     .attr("class", "stock-shadow")
+    //     .attr("stroke-linecap", "round")
+    //     .attr("stroke", "black")
+    //   .selectAll("g")
+    //     .data(data)
+    //     .join("g")
+    //     .attr("transform", d => `translate(${x(d.date)},0)`)
+    //   .append("line")
+    //     .attr("y1", d => y(d.downBorder))
+    //     .attr("y2", d => y(d.value));
+
 
 
 // let tradeVolumes = d3.json(source.fullPath()).then(
@@ -117,16 +125,12 @@ const chart = function () {
     //получает текущее событие т.е событие зума
     function zoomed(event){
         const xz = event.transform.rescaleX(x); //"the current zoom transform"
-        path.attr("d", area(data, xz));
+        path.attr("d", area(data, xz, svg));
         gx.call(xAxis, xz);
     }
 
-
-    const svg = d3.select("body").append("svg")
+    const svg = d3.select("body.one").append("svg")
         .attr("viewBox", [0, 0, width, height]);
-
-    // const svg = d3.select("svg")
-    //     .attr("viewBox", [0, 0, width, height]);
 
 
     //разбирается пример с Observable, где используется объект DOM - часть библиотеки @observablehq/stdlib
@@ -152,13 +156,15 @@ const chart = function () {
         .attr("rx", 15)
         .attr("ry", 15)
 
+
     //отрисовка самого графика происходит в "path"
     //Элемент <path> является общим элементом для описания фигуры.
     //Все базовые фигуры могут быть созданы с помощью элемента path.
     const path = svg.append("path")
         .attr("clip-path", clip)
         .attr("fill", "orange")
-        .attr("d", area(data, x));
+        .attr("d", area(data, x, svg));
+
 
     //Элемент <g> используется для группировки других SVG элементов
     //добавляем оси - обращаемся к соответствующим функциям
